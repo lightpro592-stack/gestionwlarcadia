@@ -1,9 +1,127 @@
+// --- Gestion des comptes (admin) ---
+const manageAccountsBtn = document.getElementById('manageAccountsBtn');
+const accountsModal = document.getElementById('accountsModal');
+const closeAccountsModal = document.getElementById('closeAccountsModal');
+const accountsTable = document.getElementById('accountsTable');
+const addAccountBtn = document.getElementById('addAccountBtn');
+const accountFormContainer = document.getElementById('accountFormContainer');
+const accountForm = document.getElementById('accountForm');
+const accountFormTitle = document.getElementById('accountFormTitle');
+const accountLogin = document.getElementById('accountLogin');
+const accountPassword = document.getElementById('accountPassword');
+const accountPermission = document.getElementById('accountPermission');
+const cancelAccountForm = document.getElementById('cancelAccountForm');
+
+let accountsData = [];
+let editingAccount = null;
+
+function showAccountsModal() {
+    accountsModal.classList.remove('hidden');
+    accountFormContainer.classList.add('hidden');
+    loadAccounts();
+}
+function hideAccountsModal() {
+    accountsModal.classList.add('hidden');
+    accountFormContainer.classList.add('hidden');
+}
+
+manageAccountsBtn.addEventListener('click', showAccountsModal);
+closeAccountsModal.addEventListener('click', hideAccountsModal);
+
+addAccountBtn.addEventListener('click', () => {
+    editingAccount = null;
+    accountFormTitle.textContent = 'Ajouter un compte';
+    accountLogin.value = '';
+    accountLogin.disabled = false;
+    accountPassword.value = '';
+    accountPermission.value = 'ecriture';
+    accountFormContainer.classList.remove('hidden');
+});
+
+cancelAccountForm.addEventListener('click', () => {
+    accountFormContainer.classList.add('hidden');
+});
+
+function renderAccountsTable() {
+    accountsTable.innerHTML = '';
+    accountsData.forEach(acc => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="px-4 py-2 font-mono">${acc.login}</td>
+            <td class="px-4 py-2">${acc.permission}</td>
+            <td class="px-4 py-2">
+                <button class="btn btn-edit-account" data-login="${acc.login}">Éditer</button>
+                <button class="btn btn-delete-account bg-red-600 ml-2" data-login="${acc.login}">Supprimer</button>
+            </td>
+        `;
+        accountsTable.appendChild(tr);
+    });
+}
+
+// --- Chargement des comptes depuis Google Sheets ---
+async function loadAccounts() {
+    showLoader();
+    try {
+        // On suppose que le WebApp supporte ?comptes=1 pour retourner la liste des comptes
+        const res = await fetch(WEBAPP_URL + '?comptes=1');
+        accountsData = await res.json();
+        renderAccountsTable();
+    } catch (e) {
+        accountsTable.innerHTML = '<tr><td colspan="3" class="text-red-400">Erreur de chargement des comptes</td></tr>';
+    } finally {
+        hideLoader();
+    }
+}
+
+// --- Affichage du bouton admin si permission ---
+let currentUser = null;
+function setCurrentUser(user) {
+    currentUser = user;
+    if (user && user.permission === 'admin') {
+        manageAccountsBtn.classList.remove('hidden');
+    } else {
+        manageAccountsBtn.classList.add('hidden');
+    }
+}
 // --- Login système simple ---
 const loginModal = document.getElementById('loginModal');
 const loginPassword = document.getElementById('loginPassword');
 const loginBtn = document.getElementById('loginBtn');
 const loginError = document.getElementById('loginError');
 const PASSWORD = 'arcadiawl.gestion'; // Change ce mot de passe ici
+
+// --- Login: gestion du select pseudo ---
+
+const loginPseudoInput = document.getElementById('loginPseudo');
+
+// --- Login: utiliser le pseudo sélectionné ---
+loginBtn.onclick = async () => {
+    const login = loginPseudoInput.value.trim();
+    const password = loginPassword.value;
+    if (!login || !password) return;
+    showLoader();
+    try {
+        const hash = await sha256(password);
+        const res = await fetch(WEBAPP_URL + '?login=1', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `login=${encodeURIComponent(login)}&password=${encodeURIComponent(hash)}`
+        });
+        const user = await res.json();
+        if (user && user.login) {
+            setCurrentUser(user);
+            loginModal.classList.add('hidden');
+            loginPassword.value = '';
+            loginError.classList.add('hidden');
+        } else {
+            loginError.classList.remove('hidden');
+        }
+    } catch (e) {
+        loginError.classList.remove('hidden');
+    } finally {
+        hideLoader();
+    }
+};
 
 function showLogin() {
     loginModal.classList.remove('hidden');
@@ -12,22 +130,17 @@ function hideLogin() {
     loginModal.classList.add('hidden');
 }
 
-loginBtn.addEventListener('click', tryLogin);
+
 loginPassword.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') tryLogin();
+    if (e.key === 'Enter') loginBtn.onclick();
 });
 
-function tryLogin() {
-    if (loginPassword.value === PASSWORD) {
-        hideLogin();
-        loginError.classList.add('hidden');
-        // On charge la whitelist
-        fetchDossiers();
-    } else {
-        loginError.classList.remove('hidden');
-        loginPassword.value = '';
-        loginPassword.focus();
-    }
+
+
+// --- SHA-256 utilitaire ---
+async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
 // On cache tout sauf le login au départ

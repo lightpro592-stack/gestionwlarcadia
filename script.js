@@ -95,13 +95,14 @@ const loginPseudoInput = document.getElementById('loginPseudo');
 
 // --- Login: utiliser le pseudo sélectionné ---
 loginBtn.onclick = async () => {
+loginBtn.onclick = async () => {
     const login = loginPseudoInput.value.trim();
     const password = loginPassword.value;
     if (!login || !password) return;
     showLoader();
     try {
         const hash = await sha256(password);
-        const res = await fetch(WEBAPP_URL + '?login=1', {
+        const res = await fetch(WEBAPP_URL, {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: `login=${encodeURIComponent(login)}&password=${encodeURIComponent(hash)}`
@@ -121,7 +122,6 @@ loginBtn.onclick = async () => {
         hideLoader();
     }
 };
-
 function showLogin() {
     loginModal.classList.remove('hidden');
 }

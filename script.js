@@ -95,31 +95,17 @@ const loginPseudoInput = document.getElementById('loginPseudo');
 
 // --- Login: utiliser le pseudo sélectionné ---
 loginBtn.onclick = async () => {
-loginBtn.onclick = async () => {
+loginBtn.onclick = () => {
     const login = loginPseudoInput.value.trim();
     const password = loginPassword.value;
-    if (!login || !password) return;
-    showLoader();
-    try {
-        const hash = await sha256(password);
-        const res = await fetch(WEBAPP_URL, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: `login=${encodeURIComponent(login)}&password=${encodeURIComponent(hash)}`
-        });
-        const user = await res.json();
-        if (user && user.login) {
-            setCurrentUser(user);
-            loginModal.classList.add('hidden');
-            loginPassword.value = '';
-            loginError.classList.add('hidden');
-        } else {
-            loginError.classList.remove('hidden');
-        }
-    } catch (e) {
+    if (login === "Seven" && password === "arcadiawl.gestion") {
+        setCurrentUser({login: "Seven", permission: "admin"});
+        loginModal.classList.add('hidden');
+        loginPassword.value = '';
+        loginError.classList.add('hidden');
+        // Tu peux ici appeler fetchDossiers() ou autre
+    } else {
         loginError.classList.remove('hidden');
-    } finally {
-        hideLoader();
     }
 };
 function showLogin() {

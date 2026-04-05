@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcadia RP - Gestion WhiteList</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-[#0f111a] text-gray-100 font-['Inter']">
+
+    <header class="border-b border-gray-800 bg-[#161925] p-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-purple-500 tracking-wider text-uppercase">ARCADIA <span class="text-white">WHITELIST</span></h1>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-400">Connecté en tant que : <strong class="text-white">Admin_Staff</strong></span>
+                <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">A</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto py-8 px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-[#161925] p-4 rounded-xl border border-gray-800">
+                <p class="text-gray-400 text-sm">Total Dossiers</p>
+                <h3 id="stat-total" class="text-2xl font-bold">0</h3>
+            </div>
+            <div class="bg-[#161925] p-4 rounded-xl border border-gray-800 border-l-4 border-l-green-500">
+                <p class="text-gray-400 text-sm">Citoyens Validés</p>
+                <h3 id="stat-citoyens" class="text-2xl font-bold">0</h3>
+            </div>
+            <div class="bg-[#161925] p-4 rounded-xl border border-gray-800 border-l-4 border-l-red-500">
+                <p class="text-gray-400 text-sm">Gangs / Illégal</p>
+                <h3 id="stat-gangs" class="text-2xl font-bold">0</h3>
+            </div>
+            <div class="bg-[#161925] p-4 rounded-xl border border-gray-800 border-l-4 border-l-blue-500">
+                <p class="text-gray-400 text-sm">LSPD / Services</p>
+                <h3 id="stat-lspd" class="text-2xl font-bold">0</h3>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-between mb-6 gap-4">
+            <input type="text" id="searchInput" placeholder="Rechercher un nom, ID Discord ou secteur..." 
+                   class="bg-[#161925] border border-gray-700 px-4 py-2 rounded-lg w-full md:w-96 focus:outline-none focus:border-purple-500">
+            <button class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                + Ajouter un dossier
+            </button>
+        </div>
+
+        <div class="bg-[#161925] rounded-xl border border-gray-800 overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-[#1c2030] text-gray-400 uppercase text-xs">
+                    <tr>
+                        <th class="px-6 py-4">ID Discord</th>
+                        <th class="px-6 py-4">Prénom & Nom RP</th>
+                        <th class="px-6 py-4">Secteur</th>
+                        <th class="px-6 py-4">Status papier</th>
+                        <th class="px-6 py-4">Citoyen</th>
+                        <th class="px-6 py-4">Staff</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="whitelistTable" class="divide-y divide-gray-800">
+                    </tbody>
+            </table>
+            <!-- Loader -->
+            <div id="loader" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
+                <div class="bg-[#161925] p-6 rounded-xl border border-gray-800 flex flex-col items-center">
+                    <svg class="animate-spin h-8 w-8 text-purple-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                    <span class="text-gray-300">Chargement...</span>
+                </div>
+            </div>
+        </div>
+            <!-- Modal Formulaire Dossier -->
+            <div id="modalForm" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden">
+                <div class="bg-[#161925] p-8 rounded-xl border border-gray-800 w-full max-w-md relative">
+                    <button id="closeModal" class="absolute top-2 right-2 text-gray-400 hover:text-white">✖</button>
+                    <h2 id="modalTitle" class="text-xl font-bold mb-4">Ajouter un dossier</h2>
+                    <form id="dossierForm" class="flex flex-col gap-4">
+                        <input type="text" id="inputDiscord" placeholder="ID Discord" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
+                        <input type="text" id="inputName" placeholder="Prénom & Nom RP" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
+                        <input type="text" id="inputSecteur" placeholder="Secteur" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
+                        <input type="text" id="inputDetail" placeholder="Détail (ex: Ballas, Offi Lspd...)" class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="inputPapier"> Papier valide</label>
+                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="inputCitoyen"> Citoyen</label>
+                        </div>
+                        <input type="text" id="inputStaff" placeholder="Staff" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
+                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition">Valider</button>
+                    </form>
+                </div>
+            </div>
+    </main>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+            <div class="bg-[#161925] p-8 rounded-xl border border-gray-800 w-full max-w-xs flex flex-col items-center">
+                <h2 class="text-xl font-bold mb-4 text-purple-400">Connexion</h2>
+                <input type="password" id="loginPassword" placeholder="Mot de passe" class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg mb-4 w-full text-center">
+                <button id="loginBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition w-full">Se connecter</button>
+                <div id="loginError" class="text-red-400 mt-3 hidden">Mot de passe incorrect</div>
+            </div>
+        </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

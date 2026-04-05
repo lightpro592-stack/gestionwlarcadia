@@ -63,7 +63,7 @@ function renderAccountsTable() {
     });
 }
 
-// URL Google Apps Script Web App
+// URL Google Apps Script Web App (unique pour tous les accès)
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyBZuqzhcVgVljG7mnIxhQcjkhpZlufQ78dfjyI1Wr6ODXQFcgpRhIiiJ5eKjbfgQmRMw/exec';
 
 // --- Chargement des comptes ---

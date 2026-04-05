@@ -14,7 +14,7 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold text-purple-500 tracking-wider text-uppercase">ARCADIA <span class="text-white">WHITELIST</span></h1>
             <div class="flex items-center gap-4">
-                <span class="text-sm text-gray-400">Connecté en tant que : <strong class="text-white">Admin_Staff</strong></span>
+                <span class="text-sm text-gray-400">Connecté en tant que : <strong id="connectedUser" class="text-white">-</strong></span>
                 <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">A</div>
             </div>
         </div>
@@ -61,90 +61,94 @@
                         <th class="px-6 py-4 text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="whitelistTable" class="divide-y divide-gray-800">
-                    </tbody>
+                <tbody id="whitelistTable" class="divide-y divide-gray-800"></tbody>
             </table>
-            <!-- Loader -->
-            <div id="loader" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
-                <div class="bg-[#161925] p-6 rounded-xl border border-gray-800 flex flex-col items-center">
-                    <svg class="animate-spin h-8 w-8 text-purple-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                    <span class="text-gray-300">Chargement...</span>
-                </div>
-            </div>
         </div>
-            <!-- Modal Formulaire Dossier -->
-            <div id="modalForm" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden">
-                <div class="bg-[#161925] p-8 rounded-xl border border-gray-800 w-full max-w-md relative">
-                    <button id="closeModal" class="absolute top-2 right-2 text-gray-400 hover:text-white">✖</button>
-                    <h2 id="modalTitle" class="text-xl font-bold mb-4">Ajouter un dossier</h2>
-                    <form id="dossierForm" class="flex flex-col gap-4">
-                        <input type="text" id="inputDiscord" placeholder="ID Discord" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
-                        <input type="text" id="inputName" placeholder="Prénom & Nom RP" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
-                        <input type="text" id="inputSecteur" placeholder="Secteur" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
-                        <input type="text" id="inputDetail" placeholder="Détail (ex: Ballas, Offi Lspd...)" class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
-                        <div class="flex gap-4">
-                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="inputPapier"> Papier valide</label>
-                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="inputCitoyen"> Citoyen</label>
-                        </div>
-                        <input type="text" id="inputStaff" placeholder="Staff" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
-                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition">Valider</button>
-                    </form>
-                </div>
-            </div>
     </main>
 
-        <!-- Login Modal -->
-        <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-            <div class="bg-[#161925] p-8 rounded-xl border border-gray-800 w-full max-w-xs flex flex-col items-center">
-                <h2 class="text-xl font-bold mb-4 text-purple-400">Connexion</h2>
-                    <input type="text" id="loginPseudo" class="modal-input" placeholder="Pseudo" style="margin-bottom: 12px;" autocomplete="username">
-                    <input type="password" id="loginPassword" placeholder="Mot de passe" class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg mb-4 w-full text-center">
-                    <button id="loginBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition w-full">Se connecter</button>
-                <div id="loginError" class="text-red-400 mt-3 hidden">Mot de passe incorrect</div>
-            </div>
+    <!-- Loader -->
+    <div id="loader" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
+        <div class="bg-[#161925] p-6 rounded-xl border border-gray-800 flex flex-col items-center">
+            <svg class="animate-spin h-8 w-8 text-purple-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            <span class="text-gray-300">Chargement...</span>
         </div>
+    </div>
 
-<!-- Gestion des comptes (admin) -->
-<div id="accountsModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
-    <div class="bg-[#161925] p-8 rounded-xl border border-gray-800 w-full max-w-2xl relative">
-        <button id="closeAccountsModal" class="absolute top-2 right-2 text-gray-400 hover:text-white">✖</button>
-        <h2 class="text-2xl font-bold mb-4 text-purple-400">Gestion des comptes</h2>
-        <div class="mb-4 flex justify-between items-center">
-            <button id="addAccountBtn" class="btn">+ Ajouter un compte</button>
-        </div>
-        <table class="w-full text-left mb-4">
-            <thead>
-                <tr class="text-gray-400 uppercase text-xs">
-                    <th class="px-4 py-2">Login</th>
-                    <th class="px-4 py-2">Permission</th>
-                    <th class="px-4 py-2">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="accountsTable"></tbody>
-        </table>
-        <div id="accountFormContainer" class="mt-6 hidden">
-            <h3 id="accountFormTitle" class="text-lg font-semibold mb-2">Ajouter un compte</h3>
-            <form id="accountForm" class="flex flex-col gap-3">
-                <input type="text" id="accountLogin" placeholder="Login" required>
-                <input type="password" id="accountPassword" placeholder="Mot de passe (laisser vide pour ne pas changer)">
-                <select id="accountPermission" required>
-                    <option value="ecriture">Écriture</option>
-                    <option value="lecture">Lecture seule</option>
-                    <option value="admin">Admin</option>
-                </select>
-                <div class="flex gap-2 mt-2">
-                    <button type="submit" class="btn">Valider</button>
-                    <button type="button" id="cancelAccountForm" class="btn bg-gray-700">Annuler</button>
+    <!-- Modal Formulaire Dossier -->
+    <div id="modalForm" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden">
+        <div class="bg-[#161925] p-8 rounded-xl border border-gray-800 w-full max-w-md relative">
+            <button id="closeModal" class="absolute top-2 right-2 text-gray-400 hover:text-white">✖</button>
+            <h2 id="modalTitle" class="text-xl font-bold mb-4">Ajouter un dossier</h2>
+            <form id="dossierForm" class="flex flex-col gap-4">
+                <input type="text" id="inputDiscord" placeholder="ID Discord" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
+                <input type="text" id="inputName" placeholder="Prénom & Nom RP" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
+                <input type="text" id="inputSecteur" placeholder="Secteur" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
+                <input type="text" id="inputDetail" placeholder="Détail (ex: Ballas, Offi Lspd...)" class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="inputPapier"> Papier valide</label>
+                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="inputCitoyen"> Citoyen</label>
                 </div>
+                <input type="text" id="inputStaff" placeholder="Staff" required class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg">
+                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition">Valider</button>
             </form>
         </div>
     </div>
-</div>
 
-<!-- Bouton admin (affiché seulement pour admin) -->
-<button id="manageAccountsBtn" class="fixed bottom-6 right-6 z-40 btn hidden">Gestion des comptes</button>
-</body>
-<script src="script.js"></script>
-</html>
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div class="bg-[#161925] p-8 rounded-xl border border-gray-800 w-full max-w-xs flex flex-col items-center">
+            <h2 class="text-xl font-bold mb-4 text-purple-400">Connexion</h2>
+            <input type="text" id="loginPseudo" class="modal-input" placeholder="Pseudo" style="margin-bottom: 12px;" autocomplete="username">
+            <input type="password" id="loginPassword" placeholder="Mot de passe" class="bg-[#1c2030] border border-gray-700 px-4 py-2 rounded-lg mb-4 w-full text-center">
+            <button id="loginBtn" type="button" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition w-full">Se connecter</button>
+            <div id="loginError" class="text-red-400 mt-3 hidden">Identifiants incorrects</div>
+        </div>
+    </div>
+
+    <!-- Gestion des comptes (admin) -->
+    <div id="accountsModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
+        <div class="bg-[#161925] p-8 rounded-xl border border-gray-800 w-full max-w-2xl relative">
+            <button id="closeAccountsModal" class="absolute top-2 right-2 text-gray-400 hover:text-white">✖</button>
+            <h2 class="text-2xl font-bold mb-4 text-purple-400">Gestion des comptes</h2>
+            <div class="mb-4 flex justify-between items-center">
+                <button type="button" id="addAccountBtn" class="btn">+ Ajouter un compte</button>
+            </div>
+            <table class="w-full text-left mb-4">
+                <thead>
+                    <tr class="text-gray-400 uppercase text-xs">
+                        <th class="px-4 py-2">Login</th>
+                        <th class="px-4 py-2">Permission</th>
+                        <th class="px-4 py-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="accountsTable"></tbody>
+            </table>
+            <div id="accountFormContainer" class="mt-6 hidden">
+                <h3 id="accountFormTitle" class="text-lg font-semibold mb-2">Ajouter un compte</h3>
+                <!-- CORRECTION : div au lieu de form pour éviter le rechargement de page -->
+                <div class="flex flex-col gap-3">
+                    <input type="text" id="accountLogin" placeholder="Login">
+                    <input type="password" id="accountPassword" placeholder="Mot de passe (laisser vide pour ne pas changer)">
+                    <select id="accountPermission">
+                        <option value="ecriture">Écriture</option>
+                        <option value="lecture">Lecture seule</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <div class="flex gap-2 mt-2">
+                        <button type="button" id="submitAccountBtn" class="btn">Valider</button>
+                        <button type="button" id="cancelAccountForm" class="btn bg-gray-700">Annuler</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bouton admin -->
+    <button type="button" id="manageAccountsBtn" class="fixed bottom-6 right-6 z-40 btn hidden">Gestion des comptes</button>
+
+    <script src="script.js"></script>
 </body>
 </html>

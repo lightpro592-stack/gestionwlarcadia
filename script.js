@@ -61,9 +61,47 @@ function renderAccountsTable() {
         `;
         accountsTable.appendChild(tr);
     });
+
+    // Boutons Éditer des comptes
+    accountsTable.querySelectorAll('.btn-edit-account').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const login = btn.getAttribute('data-login');
+            const acc = accountsData.find(a => a.login === login);
+            if (!acc) return;
+            editingAccount = acc;
+            accountFormTitle.textContent = 'Éditer le compte';
+            accountLogin.value = acc.login;
+            accountLogin.disabled = true;
+            accountPassword.value = '';
+            accountPermission.value = acc.permission;
+            accountFormContainer.classList.remove('hidden');
+        });
+    });
+
+    // Boutons Supprimer des comptes
+    accountsTable.querySelectorAll('.btn-delete-account').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const login = btn.getAttribute('data-login');
+            if (!confirm(`Supprimer le compte "${login}" ?`)) return;
+            showLoader();
+            try {
+                await fetch(WEBAPP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'data=' + encodeURIComponent(JSON.stringify({
+                        action: 'deleteAccount',
+                        login: login
+                    }))
+                });
+                await loadAccounts();
+            } finally {
+                hideLoader();
+            }
+        });
+    });
 }
 
-// URL Google Apps Script Web App (unique pour tous les accès)
+// URL Google Apps Script Web App
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyBZuqzhcVgVljG7mnIxhQcjkhpZlufQ78dfjyI1Wr6ODXQFcgpRhIiiJ5eKjbfgQmRMw/exec';
 
 // --- Chargement des comptes ---
@@ -79,6 +117,44 @@ async function loadAccounts() {
         hideLoader();
     }
 }
+
+// --- Soumission formulaire compte (Ajouter / Éditer) ---
+accountForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const login = accountLogin.value.trim();
+    const password = accountPassword.value;
+    const permission = accountPermission.value;
+
+    if (!login || !permission) return;
+
+    // Hash SHA-256 du mot de passe si renseigné
+    let password_hash = '';
+    if (password) {
+        password_hash = await sha256(password);
+    } else if (editingAccount) {
+        password_hash = editingAccount.password_hash || '';
+    }
+
+    const action = editingAccount ? 'editAccount' : 'addAccount';
+
+    showLoader();
+    try {
+        await fetch(WEBAPP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'data=' + encodeURIComponent(JSON.stringify({
+                action,
+                account: { login, password_hash, permission }
+            }))
+        });
+        accountFormContainer.classList.add('hidden');
+        editingAccount = null;
+        await loadAccounts();
+    } finally {
+        hideLoader();
+    }
+});
 
 // --- Utilisateur connecté ---
 let currentUser = null;
@@ -113,7 +189,7 @@ function handleLogin() {
         loginModal.classList.add('hidden');
         loginPassword.value = '';
         loginError.classList.add('hidden');
-        fetchDossiers(); // ← CORRECTION : charger les données après login
+        fetchDossiers();
     } else {
         loginError.classList.remove('hidden');
     }
@@ -199,7 +275,7 @@ searchInput.addEventListener('input', (e) => {
     renderTable(filtered);
 });
 
-// --- Modal CRUD ---
+// --- Modal CRUD dossiers ---
 const modal = document.getElementById('modalForm');
 const closeModalBtn = document.getElementById('closeModal');
 const addBtn = document.querySelector('button.bg-purple-600');

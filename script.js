@@ -1,4 +1,3 @@
-// --- Gestion des comptes (admin) ---
 const manageAccountsBtn = document.getElementById('manageAccountsBtn');
 const accountsModal = document.getElementById('accountsModal');
 const closeAccountsModal = document.getElementById('closeAccountsModal');

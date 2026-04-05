@@ -339,4 +339,4 @@ tableBody.addEventListener('click', async function(e) {
 // Fermer le modal avec Echap
 window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeModal();
-});
+})};

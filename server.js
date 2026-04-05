@@ -1,6 +1,4 @@
 // server.js
-// Serveur Express pour manipuler Google Sheets
-
 const express = require('express');
 const { google } = require('googleapis');
 const cors = require('cors');
@@ -10,7 +8,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Charger les credentials du compte de service
+// =====================
+// GOOGLE SETUP
+// =====================
 const credentials = JSON.parse(fs.readFileSync('credentials.json'));
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
@@ -22,17 +22,145 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({ version: 'v4', auth });
 
 const SPREADSHEET_ID = '1flhUvwo78H79DblWHQZXffRbStm1EcDKIcOrmOK-0wk';
-const SHEET_NAME = 'database';
+const DOSSIER_SHEET = 'database';
+const ACCOUNT_SHEET = 'accounts'; // ⚠️ crée cet onglet dans ton Google Sheet
 
-// Récupérer tous les dossiers
+// =====================
+// LOGIN
+// =====================
+app.post('/login', async (req, res) => {
+  try {
+    const { login, password } = req.body;
+
+    const result = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: ACCOUNT_SHEET,
+    });
+
+    const rows = result.data.values || [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const [accLogin, accPassword, permission] = rows[i];
+
+      if (accLogin === login && accPassword === password) {
+        return res.json({
+          success: true,
+          user: { login: accLogin, permission }
+        });
+      }
+    }
+
+    res.json({ success: false });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =====================
+// GET ACCOUNTS
+// =====================
+app.get('/accounts', async (req, res) => {
+  try {
+    const result = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: ACCOUNT_SHEET,
+    });
+
+    const rows = result.data.values || [];
+    const accounts = rows.slice(1).map(row => ({
+      login: row[0],
+      password: row[1],
+      permission: row[2]
+    }));
+
+    res.json(accounts);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =====================
+// ADD ACCOUNT
+// =====================
+app.post('/accounts', async (req, res) => {
+  try {
+    const { login, password, permission } = req.body;
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: ACCOUNT_SHEET,
+      valueInputOption: 'USER_ENTERED',
+      resource: {
+        values: [[login, password, permission]],
+      },
+    });
+
+    res.json({ success: true });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =====================
+// DELETE ACCOUNT
+// =====================
+app.delete('/accounts/:login', async (req, res) => {
+  try {
+    const login = req.params.login;
+
+    const result = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: ACCOUNT_SHEET,
+    });
+
+    const rows = result.data.values || [];
+
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === login) {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SPREADSHEET_ID,
+          resource: {
+            requests: [{
+              deleteDimension: {
+                range: {
+                  sheetId: 1, // ⚠️ sheetId de "accounts" (souvent 1)
+                  dimension: 'ROWS',
+                  startIndex: i,
+                  endIndex: i + 1,
+                },
+              },
+            }],
+          },
+        });
+        return res.json({ success: true });
+      }
+    }
+
+    res.status(404).json({ error: 'Compte non trouvé' });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =====================
+// DOSSIERS
+// =====================
+
+// GET
 app.get('/dossiers', async (req, res) => {
   try {
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: SHEET_NAME,
+      range: DOSSIER_SHEET,
     });
+
     const rows = result.data.values || [];
     const headers = rows[0];
+
     const dossiers = rows.slice(1).map(row => {
       const obj = {};
       headers.forEach((h, i) => {
@@ -40,90 +168,99 @@ app.get('/dossiers', async (req, res) => {
       });
       obj.papier = obj.papier === 'TRUE';
       obj.citoyen = obj.citoyen === 'TRUE';
-      return obj; // ← CORRECTION : suppression du 'n' parasite
+      return obj;
     });
+
     res.json(dossiers);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Ajouter un dossier
+// POST
 app.post('/dossiers', async (req, res) => {
   try {
-    const dossier = req.body;
+    const d = req.body;
+
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: SHEET_NAME,
+      range: DOSSIER_SHEET,
       valueInputOption: 'USER_ENTERED',
       resource: {
         values: [[
-          dossier.discord,
-          dossier.name,
-          dossier.secteur,
-          dossier.detail,
-          dossier.papier ? 'TRUE' : 'FALSE',
-          dossier.citoyen ? 'TRUE' : 'FALSE',
-          dossier.staff
+          d.discord,
+          d.name,
+          d.secteur,
+          d.detail,
+          d.papier ? 'TRUE' : 'FALSE',
+          d.citoyen ? 'TRUE' : 'FALSE',
+          d.staff
         ]],
       },
     });
+
     res.json({ success: true });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Modifier un dossier (par discord)
+// PUT
 app.put('/dossiers/:discord', async (req, res) => {
   try {
     const discord = req.params.discord;
-    const dossier = req.body;
+    const d = req.body;
+
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: SHEET_NAME,
+      range: DOSSIER_SHEET,
     });
+
     const rows = result.data.values || [];
-    let found = false;
+
     for (let i = 1; i < rows.length; i++) {
       if (rows[i][0] === discord) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEET_NAME}!A${i + 1}:G${i + 1}`,
+          range: `${DOSSIER_SHEET}!A${i + 1}:G${i + 1}`,
           valueInputOption: 'USER_ENTERED',
           resource: {
             values: [[
-              dossier.discord,
-              dossier.name,
-              dossier.secteur,
-              dossier.detail,
-              dossier.papier ? 'TRUE' : 'FALSE',
-              dossier.citoyen ? 'TRUE' : 'FALSE',
-              dossier.staff
+              d.discord,
+              d.name,
+              d.secteur,
+              d.detail,
+              d.papier ? 'TRUE' : 'FALSE',
+              d.citoyen ? 'TRUE' : 'FALSE',
+              d.staff
             ]],
           },
         });
-        found = true;
-        break;
+        return res.json({ success: true });
       }
     }
-    if (!found) return res.status(404).json({ error: 'Dossier non trouvé' });
-    res.json({ success: true });
+
+    res.status(404).json({ error: 'Dossier non trouvé' });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Supprimer un dossier (par discord)
+// DELETE
 app.delete('/dossiers/:discord', async (req, res) => {
   try {
     const discord = req.params.discord;
+
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: SHEET_NAME,
+      range: DOSSIER_SHEET,
     });
+
     const rows = result.data.values || [];
-    let found = false;
+
     for (let i = 1; i < rows.length; i++) {
       if (rows[i][0] === discord) {
         await sheets.spreadsheets.batchUpdate({
@@ -141,18 +278,19 @@ app.delete('/dossiers/:discord', async (req, res) => {
             }],
           },
         });
-        found = true;
-        break;
+        return res.json({ success: true });
       }
     }
-    if (!found) return res.status(404).json({ error: 'Dossier non trouvé' });
-    res.json({ success: true });
+
+    res.status(404).json({ error: 'Dossier non trouvé' });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// =====================
 const PORT = 3001;
 app.listen(PORT, () => {
-  console.log('Serveur démarré sur http://localhost:' + PORT);
+  console.log('Serveur lancé sur http://localhost:' + PORT);
 });

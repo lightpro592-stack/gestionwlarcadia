@@ -1,3 +1,7 @@
+const loader = document.getElementById('loader');
+function showLoader() { loader.classList.remove('hidden'); }
+function hideLoader() { loader.classList.add('hidden'); }
+
 const manageAccountsBtn = document.getElementById('manageAccountsBtn');
 const accountsModal = document.getElementById('accountsModal');
 const closeAccountsModal = document.getElementById('closeAccountsModal');
@@ -137,7 +141,6 @@ let whitelistData = [];
 
 // Charger les données depuis Google Sheets via Apps Script Web App
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyBZuqzhcVgVljG7mnIxhQcjkhpZlufQ78dfjyI1Wr6ODXQFcgpRhIiiJ5eKjbfgQmRMw/exec';
-
 const loader = document.getElementById('loader');
 function showLoader() { loader.classList.remove('hidden'); }
 function hideLoader() { loader.classList.add('hidden'); }

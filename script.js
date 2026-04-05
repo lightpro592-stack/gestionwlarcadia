@@ -1,7 +1,9 @@
+// --- Loader ---
 const loader = document.getElementById('loader');
 function showLoader() { loader.classList.remove('hidden'); }
 function hideLoader() { loader.classList.add('hidden'); }
 
+// --- Gestion des comptes ---
 const manageAccountsBtn = document.getElementById('manageAccountsBtn');
 const accountsModal = document.getElementById('accountsModal');
 const closeAccountsModal = document.getElementById('closeAccountsModal');
@@ -61,11 +63,13 @@ function renderAccountsTable() {
     });
 }
 
-// --- Chargement des comptes depuis Google Sheets ---
+// URL Google Apps Script Web App
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyBZuqzhcVgVljG7mnIxhQcjkhpZlufQ78dfjyI1Wr6ODXQFcgpRhIiiJ5eKjbfgQmRMw/exec';
+
+// --- Chargement des comptes ---
 async function loadAccounts() {
     showLoader();
     try {
-        // On suppose que le WebApp supporte ?comptes=1 pour retourner la liste des comptes
         const res = await fetch(WEBAPP_URL + '?comptes=1');
         accountsData = await res.json();
         renderAccountsTable();
@@ -76,7 +80,7 @@ async function loadAccounts() {
     }
 }
 
-// --- Affichage du bouton admin si permission ---
+// --- Utilisateur connecté ---
 let currentUser = null;
 function setCurrentUser(user) {
     currentUser = user;
@@ -86,32 +90,14 @@ function setCurrentUser(user) {
         manageAccountsBtn.classList.add('hidden');
     }
 }
-// --- Login système simple ---
+
+// --- Login ---
 const loginModal = document.getElementById('loginModal');
 const loginPassword = document.getElementById('loginPassword');
 const loginBtn = document.getElementById('loginBtn');
 const loginError = document.getElementById('loginError');
-const PASSWORD = 'arcadiawl.gestion'; // Change ce mot de passe ici
-
-// --- Login: gestion du select pseudo ---
-
 const loginPseudoInput = document.getElementById('loginPseudo');
 
-// --- Login: utiliser le pseudo sélectionné ---
-loginBtn.onclick = async () => {
-loginBtn.onclick = () => {
-    const login = loginPseudoInput.value.trim();
-    const password = loginPassword.value;
-    if (login === "Seven" && password === "arcadiawl.gestion") {
-        setCurrentUser({login: "Seven", permission: "admin"});
-        loginModal.classList.add('hidden');
-        loginPassword.value = '';
-        loginError.classList.add('hidden');
-        // Tu peux ici appeler fetchDossiers() ou autre
-    } else {
-        loginError.classList.remove('hidden');
-    }
-};
 function showLogin() {
     loginModal.classList.remove('hidden');
 }
@@ -119,12 +105,25 @@ function hideLogin() {
     loginModal.classList.add('hidden');
 }
 
+function handleLogin() {
+    const login = loginPseudoInput.value.trim();
+    const password = loginPassword.value;
+    if (login === "Seven" && password === "arcadiawl.gestion") {
+        setCurrentUser({ login: "Seven", permission: "admin" });
+        loginModal.classList.add('hidden');
+        loginPassword.value = '';
+        loginError.classList.add('hidden');
+        fetchDossiers(); // ← CORRECTION : charger les données après login
+    } else {
+        loginError.classList.remove('hidden');
+    }
+}
+
+loginBtn.onclick = handleLogin;
 
 loginPassword.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') loginBtn.onclick();
+    if (e.key === 'Enter') handleLogin();
 });
-
-
 
 // --- SHA-256 utilitaire ---
 async function sha256(str) {
@@ -132,18 +131,13 @@ async function sha256(str) {
     return Array.from(new Uint8Array(buf)).map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
-// On cache tout sauf le login au départ
+// Afficher le login au départ
 document.addEventListener('DOMContentLoaded', function() {
     showLogin();
 });
 
+// --- Données whitelist ---
 let whitelistData = [];
-
-// Charger les données depuis Google Sheets via Apps Script Web App
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyBZuqzhcVgVljG7mnIxhQcjkhpZlufQ78dfjyI1Wr6ODXQFcgpRhIiiJ5eKjbfgQmRMw/exec';
-const loader = document.getElementById('loader');
-function showLoader() { loader.classList.remove('hidden'); }
-function hideLoader() { loader.classList.add('hidden'); }
 
 async function fetchDossiers() {
     showLoader();
@@ -159,14 +153,11 @@ async function fetchDossiers() {
 const tableBody = document.getElementById('whitelistTable');
 const searchInput = document.getElementById('searchInput');
 
-// Fonction pour afficher les données
 function renderTable(data) {
     tableBody.innerHTML = '';
-    
     data.forEach(player => {
         const row = document.createElement('tr');
         row.className = "hover:bg-[#1c2030] transition duration-200 text-sm";
-        
         row.innerHTML = `
             <td class="px-6 py-4 font-mono text-xs text-gray-400">${player.discord}</td>
             <td class="px-6 py-4 font-semibold">${player.name}</td>
@@ -188,11 +179,9 @@ function renderTable(data) {
         `;
         tableBody.appendChild(row);
     });
-
     updateStats(data);
 }
 
-// Mise à jour des compteurs
 function updateStats(data) {
     document.getElementById('stat-total').innerText = data.length;
     document.getElementById('stat-citoyens').innerText = data.filter(p => p.citoyen).length;
@@ -200,29 +189,23 @@ function updateStats(data) {
     document.getElementById('stat-lspd').innerText = data.filter(p => p.secteur === 'LSPD').length;
 }
 
-// Logique de recherche
 searchInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
-    const filtered = whitelistData.filter(p => 
-        p.name.toLowerCase().includes(term) || 
-        p.discord.includes(term) || 
+    const filtered = whitelistData.filter(p =>
+        p.name.toLowerCase().includes(term) ||
+        p.discord.includes(term) ||
         p.secteur.toLowerCase().includes(term)
     );
     renderTable(filtered);
 });
 
-
-// Initialisation
-// fetchDossiers() sera appelé après login
-
-// --- Gestion du Modal et CRUD ---
+// --- Modal CRUD ---
 const modal = document.getElementById('modalForm');
 const closeModalBtn = document.getElementById('closeModal');
 const addBtn = document.querySelector('button.bg-purple-600');
 const dossierForm = document.getElementById('dossierForm');
 const modalTitle = document.getElementById('modalTitle');
 
-// Champs du formulaire
 const inputDiscord = document.getElementById('inputDiscord');
 const inputName = document.getElementById('inputName');
 const inputSecteur = document.getElementById('inputSecteur');
@@ -244,7 +227,6 @@ function openModal(edit = false, dossier = null) {
         inputName.value = dossier.name;
         inputSecteur.value = dossier.secteur;
         inputDetail.value = dossier.detail;
-        // Gestion robuste des cases à cocher
         inputPapier.checked = dossier.papier === true || dossier.papier === 'TRUE' || dossier.papier === 'true' || dossier.papier === 1 || dossier.papier === '1';
         inputCitoyen.checked = dossier.citoyen === true || dossier.citoyen === 'TRUE' || dossier.citoyen === 'true' || dossier.citoyen === 1 || dossier.citoyen === '1';
         inputStaff.value = dossier.staff;
@@ -269,10 +251,6 @@ function closeModal() {
 
 addBtn.addEventListener('click', () => openModal(false));
 closeModalBtn.addEventListener('click', closeModal);
-
-
-
-
 
 dossierForm.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -300,7 +278,6 @@ dossierForm.addEventListener('submit', async function(e) {
     }
 });
 
-// Délégation pour les boutons Éditer/Supprimer
 tableBody.addEventListener('click', async function(e) {
     if (e.target.classList.contains('edit-btn')) {
         const discord = e.target.getAttribute('data-discord');
@@ -325,7 +302,6 @@ tableBody.addEventListener('click', async function(e) {
     }
 });
 
-// Fermer le modal avec Echap
 window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeModal();
-})};
+});
